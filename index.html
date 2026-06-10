@@ -3,20 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CIFAR-10 模型展示平台</title>
+  <title>CIFAR-10 ONNX 模型展示平台</title>
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --card-2: #1f2937;
-      --text: #f9fafb;
+      --bg1: #0f172a;
+      --bg2: #111827;
+      --bg3: #1e293b;
+      --card: rgba(17, 24, 39, 0.92);
+      --card2: #1f2937;
+      --text: #f8fafc;
       --muted: #cbd5e1;
       --accent: #38bdf8;
-      --accent-2: #22c55e;
-      --danger: #f87171;
+      --accent2: #22c55e;
       --border: rgba(255,255,255,0.08);
-      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --danger: #f87171;
+      --warning: #fbbf24;
+      --shadow: 0 12px 30px rgba(0,0,0,0.35);
       --radius: 18px;
     }
 
@@ -25,65 +28,77 @@
     body {
       margin: 0;
       font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-      background: linear-gradient(135deg, #0f172a, #111827, #1e293b);
       color: var(--text);
+      background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
       min-height: 100vh;
     }
 
     .container {
       width: min(1200px, 92%);
-      margin: 32px auto 60px;
+      margin: 28px auto 48px;
     }
 
     .hero {
-      margin-bottom: 24px;
-      padding: 28px;
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--border);
       box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
     }
 
-    .hero h1 { margin: 0 0 10px; font-size: 2rem; }
-    .hero p { margin: 0; color: var(--muted); line-height: 1.7; }
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: 2rem;
+    }
 
-    .grid {
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .layout {
       display: grid;
       grid-template-columns: 360px 1fr;
       gap: 24px;
     }
 
-    @media (max-width: 960px) {
-      .grid { grid-template-columns: 1fr; }
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
     }
 
     .panel {
-      background: rgba(17,24,39,0.9);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
       overflow: hidden;
+      box-shadow: var(--shadow);
     }
 
     .panel-header {
       padding: 18px 20px;
-      background: rgba(255,255,255,0.03);
       border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
       font-weight: 700;
       font-size: 1.05rem;
     }
 
-    .panel-body { padding: 20px; }
+    .panel-body {
+      padding: 20px;
+    }
 
-    .model-switcher {
+    .model-list {
       display: grid;
       gap: 12px;
     }
 
     .model-card {
       border: 1px solid var(--border);
-      background: var(--card-2);
+      background: var(--card2);
       border-radius: 14px;
       padding: 14px;
       cursor: pointer;
@@ -97,38 +112,38 @@
 
     .model-card.active {
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2) inset;
+      box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.15);
     }
 
     .model-title {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      font-weight: 700;
+      gap: 10px;
       margin-bottom: 8px;
+      font-weight: 700;
     }
 
     .badge {
-      font-size: 0.78rem;
       padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(56, 189, 248, 0.15);
-      color: #bae6fd;
+      font-size: 0.78rem;
       border: 1px solid rgba(56, 189, 248, 0.25);
+      background: rgba(56, 189, 248, 0.14);
+      color: #bae6fd;
       white-space: nowrap;
     }
 
     .badge.good {
-      background: rgba(34, 197, 94, 0.15);
-      color: #bbf7d0;
       border-color: rgba(34, 197, 94, 0.25);
+      background: rgba(34, 197, 94, 0.14);
+      color: #bbf7d0;
     }
 
     .desc {
       color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.6;
+      font-size: 0.94rem;
+      line-height: 1.7;
     }
 
     .controls {
@@ -138,40 +153,48 @@
     }
 
     .upload-box {
-      border: 2px dashed rgba(255,255,255,0.16);
+      border: 2px dashed rgba(255,255,255,0.15);
       border-radius: 16px;
-      padding: 18px;
       background: rgba(255,255,255,0.03);
+      padding: 18px;
       text-align: center;
     }
 
-    .upload-box input[type="file"] { display: none; }
+    .upload-box input[type="file"] {
+      display: none;
+    }
 
     .btn {
       display: inline-block;
       border: none;
-      outline: none;
       border-radius: 12px;
       padding: 12px 18px;
       font-size: 0.98rem;
       font-weight: 700;
       cursor: pointer;
-      transition: 0.2s ease;
       color: white;
+      transition: 0.2s ease;
       background: linear-gradient(135deg, #0284c7, #38bdf8);
     }
 
     .btn:hover {
       transform: translateY(-1px);
-      opacity: 0.95;
+      opacity: 0.96;
+    }
+
+    .btn.success {
+      background: linear-gradient(135deg, #15803d, #22c55e);
     }
 
     .btn.secondary {
       background: linear-gradient(135deg, #374151, #4b5563);
     }
 
-    .btn.success {
-      background: linear-gradient(135deg, #15803d, #22c55e);
+    .hint {
+      color: #94a3b8;
+      font-size: 0.86rem;
+      line-height: 1.7;
+      margin-top: 8px;
     }
 
     .sample-grid {
@@ -182,17 +205,17 @@
     }
 
     .sample-item {
-      background: var(--card-2);
       border: 1px solid var(--border);
       border-radius: 14px;
       overflow: hidden;
+      background: var(--card2);
       cursor: pointer;
       transition: 0.2s ease;
     }
 
     .sample-item:hover {
       transform: translateY(-2px);
-      border-color: rgba(56, 189, 248, 0.4);
+      border-color: rgba(56, 189, 248, 0.45);
     }
 
     .sample-item img {
@@ -205,9 +228,9 @@
 
     .sample-item div {
       padding: 10px;
-      font-size: 0.9rem;
       color: var(--muted);
       text-align: center;
+      font-size: 0.9rem;
     }
 
     .main-view {
@@ -216,23 +239,26 @@
       gap: 24px;
     }
 
-    @media (max-width: 960px) {
-      .main-view { grid-template-columns: 1fr; }
+    @media (max-width: 980px) {
+      .main-view {
+        grid-template-columns: 1fr;
+      }
     }
 
     .preview-card {
-      background: rgba(255,255,255,0.03);
       border: 1px solid var(--border);
       border-radius: 16px;
+      background: rgba(255,255,255,0.03);
       padding: 16px;
     }
 
     .preview-card img {
       width: 100%;
-      border-radius: 14px;
+      max-height: 380px;
       object-fit: contain;
+      border-radius: 14px;
       background: #0b1220;
-      max-height: 360px;
+      display: block;
     }
 
     .meta {
@@ -240,55 +266,53 @@
       display: grid;
       gap: 8px;
       color: var(--muted);
-      font-size: 0.95rem;
+      font-size: 0.94rem;
+      line-height: 1.6;
     }
 
-    .result-box {
-      display: grid;
-      gap: 18px;
-    }
-
-    .status {
-      padding: 14px 16px;
+    .status-box {
+      border: 1px solid var(--border);
       border-radius: 14px;
       background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
+      padding: 14px 16px;
       color: var(--muted);
       line-height: 1.7;
       white-space: pre-line;
     }
 
-    .prediction {
+    .prediction-box {
+      display: none;
       padding: 18px;
       border-radius: 16px;
-      background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(34,197,94,0.10));
       border: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(34,197,94,0.10));
     }
 
-    .prediction h2 {
+    .prediction-box h2 {
       margin: 0 0 10px;
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       color: #e0f2fe;
     }
 
-    .prediction .big {
+    .predicted-label {
       font-size: 2rem;
       font-weight: 800;
       margin-bottom: 6px;
     }
 
-    .prediction .sub {
+    .predicted-score {
       color: var(--muted);
     }
 
     .topk {
       display: grid;
       gap: 10px;
+      margin-top: 8px;
     }
 
     .bar-row {
       display: grid;
-      grid-template-columns: 110px 1fr 70px;
+      grid-template-columns: 110px 1fr 72px;
       align-items: center;
       gap: 12px;
       font-size: 0.95rem;
@@ -298,8 +322,8 @@
       width: 100%;
       height: 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.08);
       overflow: hidden;
+      background: rgba(255,255,255,0.08);
     }
 
     .bar-fill {
@@ -313,40 +337,46 @@
       margin-top: 18px;
       color: var(--muted);
       font-size: 0.9rem;
-      line-height: 1.7;
+      line-height: 1.8;
     }
 
-    .hidden-canvas { display: none; }
-    .small-note {
-      font-size: 0.86rem;
-      color: #94a3b8;
-      line-height: 1.6;
-      margin-top: 8px;
+    .warn {
+      color: #fca5a5;
     }
 
-    .warn { color: #fca5a5; }
+    .ok {
+      color: #86efac;
+    }
+
     code {
-      background: rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.08);
       padding: 2px 6px;
       border-radius: 6px;
+      font-size: 0.92em;
+    }
+
+    canvas {
+      display: none;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <section class="hero">
-      <h1>CIFAR-10 模型展示平台</h1>
+      <h1>CIFAR-10 ONNX 模型展示平台</h1>
       <p>
-        支援切換 GoogleNet 與 ResNet18 模型，可上傳任意尺寸圖片或使用範例圖片進行測試。
-        網頁會依照 ONNX 模型的輸入 shape，自動調整圖片尺寸與 tensor 排列格式。
+        本網站可直接部署於 GitHub Pages，使用者可切換 GoogleNet 與 ResNet18 模型，
+        上傳任意尺寸圖片或點選範例圖片進行推論。系統會依模型輸入設定自動縮放圖片，
+        並於瀏覽器中使用 ONNX Runtime Web 執行推論。
       </p>
     </section>
 
-    <div class="grid">
+    <div class="layout">
+      <!-- 左側控制區 -->
       <section class="panel">
         <div class="panel-header">模型切換與測試控制</div>
         <div class="panel-body">
-          <div class="model-switcher">
+          <div class="model-list">
             <div class="model-card active" data-model="googlenet">
               <div class="model-title">
                 <span>GoogleNet CIFAR-10</span>
@@ -354,7 +384,7 @@
               </div>
               <div class="desc">
                 檔案：<code>googlenet_cifar10.onnx</code><br />
-                特性：準確率相對較低，適合與較佳模型做比較。
+                特性：準確率相對較低，適合展示與較佳模型的差異。
               </div>
             </div>
 
@@ -365,7 +395,7 @@
               </div>
               <div class="desc">
                 檔案：<code>resnet18_cifar10.onnx</code><br />
-                特性：準確率較好，預期辨識表現更穩定。
+                特性：準確率較高，預期預測更穩定。
               </div>
             </div>
           </div>
@@ -375,8 +405,8 @@
               <p>請上傳任意尺寸圖片進行測試</p>
               <label for="fileInput" class="btn">選擇圖片</label>
               <input type="file" id="fileInput" accept="image/*" />
-              <div class="small-note">
-                不限制原始圖片尺寸，系統會依模型需求自動縮放。
+              <div class="hint">
+                支援 JPG / PNG / WEBP。原始尺寸不限，系統會自動縮放到模型要求大小。
               </div>
             </div>
 
@@ -386,14 +416,15 @@
 
           <div style="margin-top: 24px;">
             <h3 style="margin: 0 0 10px;">範例圖片</h3>
-            <div class="small-note">
-              請將範例圖片放在 <code>samples/</code> 資料夾中。
+            <div class="hint">
+              請將範例圖放在 <code>samples/</code> 資料夾中。
             </div>
             <div class="sample-grid" id="sampleGrid"></div>
           </div>
         </div>
       </section>
 
+      <!-- 右側結果區 -->
       <section class="panel">
         <div class="panel-header">模型推論結果</div>
         <div class="panel-body">
@@ -405,28 +436,32 @@
                 <div><strong>模型狀態：</strong><span id="modelStatus">尚未載入</span></div>
                 <div><strong>模型輸入：</strong><span id="modelInputInfo">尚未取得</span></div>
                 <div><strong>圖片來源：</strong><span id="imageSource">尚未選擇</span></div>
+                <div><strong>圖片尺寸：</strong><span id="imageSizeInfo">尚未選擇</span></div>
               </div>
             </div>
 
-            <div class="result-box">
-              <div class="status" id="statusBox">
+            <div>
+              <div class="status-box" id="statusBox">
                 請先選擇模型，然後上傳圖片或點選範例圖片，再按下「開始判斷」。
               </div>
 
-              <div class="prediction" id="predictionBox" style="display:none;">
+              <div class="prediction-box" id="predictionBox">
                 <h2>預測結果</h2>
-                <div class="big" id="predictedClass">-</div>
-                <div class="sub" id="predictedScore">信心分數：-</div>
+                <div class="predicted-label" id="predictedClass">-</div>
+                <div class="predicted-score" id="predictedScore">信心分數：-</div>
               </div>
 
-              <div>
-                <h3 style="margin-top:0;">Top-5 類別機率</h3>
+              <div style="margin-top: 18px;">
+                <h3 style="margin: 0 0 12px;">Top-5 類別機率</h3>
                 <div class="topk" id="topKContainer"></div>
               </div>
 
               <div class="footer-note">
-                若模型是由 MATLAB 匯出，常見問題是輸入格式可能不是 <code>[1,3,32,32]</code>，
-                而是 <code>[1,32,32,3]</code>。此版本已嘗試自動判斷。
+                <strong>說明：</strong>
+                即使資料集是 CIFAR-10，模型輸入尺寸也不一定是 <code>32×32</code>。
+                若你的 MATLAB 匯出模型要求 <code>224×224</code>，
+                本頁面會依 ONNX metadata 自動調整。若預測結果不合理，請再檢查
+                normalization 與類別順序是否與訓練時一致。
               </div>
             </div>
           </div>
@@ -435,9 +470,12 @@
     </div>
   </div>
 
-  <canvas id="hiddenCanvas" class="hidden-canvas"></canvas>
+  <canvas id="hiddenCanvas"></canvas>
 
   <script>
+    // =========================
+    // 基本設定
+    // =========================
     const CLASS_NAMES = [
       "airplane", "automobile", "bird", "cat", "deer",
       "dog", "frog", "horse", "ship", "truck"
@@ -454,10 +492,11 @@
         key: "resnet18",
         name: "ResNet18 CIFAR-10",
         file: "./resnet18_cifar10.onnx",
-        note: "準確率較佳"
+        note: "準確率較高"
       }
     };
 
+    // 範例圖片
     const SAMPLE_IMAGES = [
       { label: "飛機範例", file: "./samples/airplane.jpg" },
       { label: "汽車範例", file: "./samples/automobile.jpg" },
@@ -465,36 +504,52 @@
       { label: "卡車範例", file: "./samples/truck.jpg" }
     ];
 
+    // 若你的模型訓練時有做 normalization，請改成 true
+    const USE_NORMALIZATION = false;
+    const MEAN = [0.4914, 0.4822, 0.4465];
+    const STD  = [0.2023, 0.1994, 0.2010];
+
+    // 若模型 metadata 是動態維度或取不到尺寸，優先 fallback 224
+    const DEFAULT_FALLBACK_SIZE = 224;
+
+    // =========================
+    // 狀態變數
+    // =========================
     let currentModelKey = "googlenet";
     let currentSession = null;
+    let currentModelMeta = null;
     let currentImageElement = null;
     let currentImageSourceText = "尚未選擇";
     let isModelLoading = false;
-    let currentModelMeta = null;
 
-    // 如果你的 MATLAB 模型訓練有 normalization，再改成 true
-    const USE_NORMALIZATION = false;
-    const MEAN = [0.4914, 0.4822, 0.4465];
-    const STD = [0.2023, 0.1994, 0.2010];
-
+    // =========================
+    // DOM
+    // =========================
     const modelCards = document.querySelectorAll(".model-card");
     const currentModelName = document.getElementById("currentModelName");
     const modelStatus = document.getElementById("modelStatus");
     const modelInputInfo = document.getElementById("modelInputInfo");
     const imageSource = document.getElementById("imageSource");
+    const imageSizeInfo = document.getElementById("imageSizeInfo");
+
     const fileInput = document.getElementById("fileInput");
     const previewImage = document.getElementById("previewImage");
     const predictBtn = document.getElementById("predictBtn");
     const clearBtn = document.getElementById("clearBtn");
+
     const statusBox = document.getElementById("statusBox");
     const predictionBox = document.getElementById("predictionBox");
     const predictedClass = document.getElementById("predictedClass");
     const predictedScore = document.getElementById("predictedScore");
     const topKContainer = document.getElementById("topKContainer");
     const sampleGrid = document.getElementById("sampleGrid");
+
     const hiddenCanvas = document.getElementById("hiddenCanvas");
     const ctx = hiddenCanvas.getContext("2d");
 
+    // =========================
+    // 初始化
+    // =========================
     init();
 
     async function init() {
@@ -534,17 +589,17 @@
     function renderSamples() {
       sampleGrid.innerHTML = "";
       SAMPLE_IMAGES.forEach(sample => {
-        const div = document.createElement("div");
-        div.className = "sample-item";
-        div.innerHTML = `
-          <img src="${sample.file}" alt="${sample.label}" />
+        const item = document.createElement("div");
+        item.className = "sample-item";
+        item.innerHTML = `
+          <img src="${sample.file}" alt="${sample.label}">
           <div>${sample.label}</div>
         `;
-        div.addEventListener("click", () => {
+        item.addEventListener("click", () => {
           loadPreview(sample.file, `範例圖片：${sample.label}`);
           setStatus(`已載入範例圖片：${sample.label}，可直接按「開始判斷」。`);
         });
-        sampleGrid.appendChild(div);
+        sampleGrid.appendChild(item);
       });
     }
 
@@ -555,10 +610,59 @@
       currentModelName.textContent = MODEL_CONFIG[currentModelKey].name;
     }
 
+    function setStatus(message) {
+      statusBox.textContent = message;
+    }
+
+    function clearPrediction() {
+      predictionBox.style.display = "none";
+      predictedClass.textContent = "-";
+      predictedScore.textContent = "信心分數：-";
+      topKContainer.innerHTML = "";
+    }
+
+    function clearImage() {
+      previewImage.src = "";
+      currentImageElement = null;
+      currentImageSourceText = "尚未選擇";
+      imageSource.textContent = "尚未選擇";
+      imageSizeInfo.textContent = "尚未選擇";
+      fileInput.value = "";
+      clearPrediction();
+      setStatus("已清除圖片，請重新上傳或選擇範例圖片。");
+    }
+
+    function loadPreview(src, sourceText) {
+      clearPrediction();
+      previewImage.src = src;
+      currentImageSourceText = sourceText;
+      imageSource.textContent = sourceText;
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        currentImageElement = img;
+        imageSizeInfo.textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+        setStatus(
+          `圖片已載入。\n` +
+          `來源：${sourceText}\n` +
+          `原始尺寸：${img.naturalWidth} × ${img.naturalHeight}`
+        );
+      };
+      img.onerror = () => {
+        currentImageElement = null;
+        imageSizeInfo.textContent = "讀取失敗";
+        setStatus("圖片載入失敗，請重新選擇圖片。");
+      };
+      img.src = src;
+    }
+
+    // =========================
+    // 模型資訊判讀
+    // =========================
     function inferModelInputShape(session) {
       const inputName = session.inputNames[0];
       const inputMeta = session.inputMetadata[inputName];
-
       const dims = inputMeta?.dimensions || [];
       const type = inputMeta?.type || "unknown";
 
@@ -569,35 +673,65 @@
       };
     }
 
+    function isNumericDim(v) {
+      return typeof v === "number" && Number.isFinite(v) && v > 0;
+    }
+
     function parseInputSpec(dims) {
-      // 預設 CIFAR-10 常見尺寸
-      let height = 32;
-      let width = 32;
       let format = "NCHW";
+      let height = null;
+      let width = null;
 
       if (!Array.isArray(dims) || dims.length !== 4) {
-        return { format, height, width, rawDims: dims, valid: false };
+        return {
+          format: "NCHW",
+          height: DEFAULT_FALLBACK_SIZE,
+          width: DEFAULT_FALLBACK_SIZE,
+          rawDims: dims,
+          valid: false
+        };
       }
 
-      const d = dims.map(v => (typeof v === "number" ? v : String(v).toLowerCase()));
+      const d = dims.map(v => typeof v === "number" ? v : String(v).toLowerCase());
 
-      // 可能是 [1,3,H,W]
+      // [1, 3, H, W]
       if (d[1] === 3 || d[1] === "3") {
         format = "NCHW";
-        height = typeof dims[2] === "number" ? dims[2] : 32;
-        width = typeof dims[3] === "number" ? dims[3] : 32;
-        return { format, height, width, rawDims: dims, valid: true };
+        height = isNumericDim(dims[2]) ? dims[2] : DEFAULT_FALLBACK_SIZE;
+        width  = isNumericDim(dims[3]) ? dims[3] : DEFAULT_FALLBACK_SIZE;
+
+        return {
+          format,
+          height,
+          width,
+          rawDims: dims,
+          valid: true
+        };
       }
 
-      // 可能是 [1,H,W,3]
+      // [1, H, W, 3]
       if (d[3] === 3 || d[3] === "3") {
         format = "NHWC";
-        height = typeof dims[1] === "number" ? dims[1] : 32;
-        width = typeof dims[2] === "number" ? dims[2] : 32;
-        return { format, height, width, rawDims: dims, valid: true };
+        height = isNumericDim(dims[1]) ? dims[1] : DEFAULT_FALLBACK_SIZE;
+        width  = isNumericDim(dims[2]) ? dims[2] : DEFAULT_FALLBACK_SIZE;
+
+        return {
+          format,
+          height,
+          width,
+          rawDims: dims,
+          valid: true
+        };
       }
 
-      return { format, height, width, rawDims: dims, valid: false };
+      // 若 metadata 形狀不典型，保守預設
+      return {
+        format: "NCHW",
+        height: DEFAULT_FALLBACK_SIZE,
+        width: DEFAULT_FALLBACK_SIZE,
+        rawDims: dims,
+        valid: false
+      };
     }
 
     async function loadModel(modelKey) {
@@ -605,6 +739,8 @@
       isModelLoading = true;
       modelStatus.textContent = "載入中...";
       modelInputInfo.textContent = "讀取中...";
+      clearPrediction();
+
       setStatus(`正在載入模型：${model.name}`);
 
       try {
@@ -617,118 +753,64 @@
         const spec = parseInputSpec(meta.dims);
         currentModelMeta = { ...meta, ...spec };
 
-        modelStatus.textContent = `已載入：${model.name}`;
-        modelInputInfo.textContent = `${meta.inputName} | ${meta.type} | [${meta.dims.join(", ")}] | ${spec.format} | ${spec.height}×${spec.width}`;
+        modelStatus.innerHTML = `<span class="ok">已載入：${model.name}</span>`;
+        modelInputInfo.textContent =
+          `${meta.inputName} | ${meta.type} | [${meta.dims.join(", ")}] | ${spec.format} | ${spec.width}×${spec.height}`;
 
         setStatus(
-          `模型載入完成：${model.name}（${model.note}）\n` +
+          `模型載入完成：${model.name}\n` +
           `輸入名稱：${meta.inputName}\n` +
           `輸入型別：${meta.type}\n` +
           `輸入維度：[${meta.dims.join(", ")}]\n` +
-          `判定格式：${spec.format}，縮放尺寸：${spec.width}×${spec.height}`
+          `判定格式：${spec.format}\n` +
+          `模型要求尺寸：${spec.width} × ${spec.height}`
         );
       } catch (error) {
         console.error(error);
+        currentSession = null;
+        currentModelMeta = null;
         modelStatus.innerHTML = `<span class="warn">模型載入失敗</span>`;
         modelInputInfo.textContent = "無法取得";
-        setStatus(`模型載入失敗，請確認檔案 ${model.file} 是否存在，且 GitHub Pages 路徑設定正確。`);
+        setStatus(
+          `模型載入失敗。\n` +
+          `請確認以下項目：\n` +
+          `1. 檔案 ${model.file} 是否存在\n` +
+          `2. GitHub Pages 路徑是否正確\n` +
+          `3. 模型檔是否可被瀏覽器正確讀取`
+        );
       } finally {
         isModelLoading = false;
       }
     }
 
-    function loadPreview(src, sourceText) {
-      previewImage.src = src;
-      previewImage.style.display = "block";
-      currentImageSourceText = sourceText;
-      imageSource.textContent = sourceText;
-
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        currentImageElement = img;
-        setStatus(
-          `圖片已載入。\n` +
-          `原始尺寸：${img.naturalWidth} × ${img.naturalHeight}\n` +
-          `來源：${sourceText}`
-        );
-      };
-      img.onerror = () => {
-        setStatus("圖片載入失敗，請重新選擇圖片。");
-      };
-      img.src = src;
-    }
-
-    function clearImage() {
-      previewImage.src = "";
-      currentImageElement = null;
-      currentImageSourceText = "尚未選擇";
-      imageSource.textContent = currentImageSourceText;
-      predictionBox.style.display = "none";
-      topKContainer.innerHTML = "";
-      predictedClass.textContent = "-";
-      predictedScore.textContent = "信心分數：-";
-      setStatus("已清除圖片，請重新上傳或選擇範例圖片。");
-      fileInput.value = "";
-    }
-
-    function setStatus(message) {
-      statusBox.textContent = message;
-    }
-
-    function softmax(arr) {
-      const max = Math.max(...arr);
-      const exps = arr.map(x => Math.exp(x - max));
-      const sum = exps.reduce((a, b) => a + b, 0);
-      return exps.map(x => x / sum);
-    }
-
-    function getTopK(probabilities, k = 5) {
-      return probabilities
-        .map((p, i) => ({ index: i, prob: p, label: CLASS_NAMES[i] || `class_${i}` }))
-        .sort((a, b) => b.prob - a.prob)
-        .slice(0, k);
-    }
-
-    function renderTopK(topK) {
-      topKContainer.innerHTML = "";
-      topK.forEach(item => {
-        const row = document.createElement("div");
-        row.className = "bar-row";
-        row.innerHTML = `
-          <div>${item.label}</div>
-          <div class="bar">
-            <div class="bar-fill" style="width:${(item.prob * 100).toFixed(2)}%"></div>
-          </div>
-          <div>${(item.prob * 100).toFixed(2)}%</div>
-        `;
-        topKContainer.appendChild(row);
-      });
-    }
-
+    // =========================
+    // 影像前處理
+    // =========================
     function preprocessImage(image, modelMeta) {
-      const width = modelMeta?.width || 32;
-      const height = modelMeta?.height || 32;
+      const width = modelMeta?.width || DEFAULT_FALLBACK_SIZE;
+      const height = modelMeta?.height || DEFAULT_FALLBACK_SIZE;
       const format = modelMeta?.format || "NCHW";
 
       hiddenCanvas.width = width;
       hiddenCanvas.height = height;
 
       ctx.clearRect(0, 0, width, height);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       ctx.drawImage(image, 0, 0, width, height);
 
-      const imageData = ctx.getImageData(0, 0, width, height).data;
+      const rgba = ctx.getImageData(0, 0, width, height).data;
 
       if (format === "NCHW") {
         const input = new Float32Array(1 * 3 * height * width);
 
         for (let y = 0; y < height; y++) {
           for (let x = 0; x < width; x++) {
-            const idx = (y * width + x) * 4;
+            const pixelIndex = (y * width + x) * 4;
 
-            let r = imageData[idx] / 255.0;
-            let g = imageData[idx + 1] / 255.0;
-            let b = imageData[idx + 2] / 255.0;
+            let r = rgba[pixelIndex] / 255.0;
+            let g = rgba[pixelIndex + 1] / 255.0;
+            let b = rgba[pixelIndex + 2] / 255.0;
 
             if (USE_NORMALIZATION) {
               r = (r - MEAN[0]) / STD[0];
@@ -751,11 +833,11 @@
 
         for (let y = 0; y < height; y++) {
           for (let x = 0; x < width; x++) {
-            const idx = (y * width + x) * 4;
+            const pixelIndex = (y * width + x) * 4;
 
-            let r = imageData[idx] / 255.0;
-            let g = imageData[idx + 1] / 255.0;
-            let b = imageData[idx + 2] / 255.0;
+            let r = rgba[pixelIndex] / 255.0;
+            let g = rgba[pixelIndex + 1] / 255.0;
+            let b = rgba[pixelIndex + 2] / 255.0;
 
             if (USE_NORMALIZATION) {
               r = (r - MEAN[0]) / STD[0];
@@ -776,13 +858,57 @@
       throw new Error("無法判斷模型輸入格式，只支援 NCHW 或 NHWC。");
     }
 
+    // =========================
+    // 後處理
+    // =========================
+    function softmax(arr) {
+      const max = Math.max(...arr);
+      const exps = arr.map(v => Math.exp(v - max));
+      const sum = exps.reduce((a, b) => a + b, 0);
+      return exps.map(v => v / sum);
+    }
+
+    function flattenOutput(data) {
+      return Array.from(data).flat(Infinity);
+    }
+
+    function getTopK(probabilities, k = 5) {
+      return probabilities
+        .map((p, i) => ({
+          index: i,
+          prob: p,
+          label: CLASS_NAMES[i] || `class_${i}`
+        }))
+        .sort((a, b) => b.prob - a.prob)
+        .slice(0, k);
+    }
+
+    function renderTopK(topK) {
+      topKContainer.innerHTML = "";
+      topK.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        row.innerHTML = `
+          <div>${item.label}</div>
+          <div class="bar">
+            <div class="bar-fill" style="width:${(item.prob * 100).toFixed(2)}%"></div>
+          </div>
+          <div>${(item.prob * 100).toFixed(2)}%</div>
+        `;
+        topKContainer.appendChild(row);
+      });
+    }
+
+    // =========================
+    // 推論
+    // =========================
     async function runPrediction() {
       if (isModelLoading) {
         setStatus("模型仍在載入中，請稍候。");
         return;
       }
 
-      if (!currentSession) {
+      if (!currentSession || !currentModelMeta) {
         setStatus("目前模型尚未成功載入。");
         return;
       }
@@ -800,7 +926,9 @@
 
         setStatus(
           `正在進行模型推論...\n` +
+          `圖片來源：${currentImageSourceText}\n` +
           `圖片原始尺寸：${currentImageElement.naturalWidth} × ${currentImageElement.naturalHeight}\n` +
+          `縮放後尺寸：${currentModelMeta.width} × ${currentModelMeta.height}\n` +
           `模型輸入格式：${currentModelMeta.format}\n` +
           `模型輸入 tensor shape：${JSON.stringify(inputTensor.dims)}`
         );
@@ -813,10 +941,18 @@
           throw new Error("模型輸出為空，請檢查 ONNX 輸出節點。");
         }
 
-        const output = Array.from(outputTensor.data);
+        const rawOutput = flattenOutput(outputTensor.data);
 
-        // 若模型輸出是 10 維 logits，這裡可直接 softmax
-        const probs = softmax(output);
+        if (rawOutput.length < CLASS_NAMES.length) {
+          throw new Error(
+            `模型輸出長度不足，取得 ${rawOutput.length}，預期至少 ${CLASS_NAMES.length}。`
+          );
+        }
+
+        // 若模型輸出已是機率，可改成：
+        // const probs = rawOutput;
+        const probs = softmax(rawOutput);
+
         const topK = getTopK(probs, 5);
         const best = topK[0];
 
@@ -829,19 +965,21 @@
           `推論完成。\n` +
           `使用模型：${MODEL_CONFIG[currentModelKey].name}\n` +
           `圖片來源：${currentImageSourceText}\n` +
+          `輸入節點：${inputName}\n` +
           `輸出節點：${outputName}\n` +
           `輸出 shape：${JSON.stringify(outputTensor.dims)}`
         );
       } catch (error) {
         console.error(error);
+        clearPrediction();
         setStatus(
           `推論失敗。\n` +
           `錯誤訊息：${error.message}\n\n` +
-          `可能原因：\n` +
-          `1. 模型輸入格式不是目前判定的 NCHW / NHWC\n` +
-          `2. 模型需要特殊 normalization\n` +
-          `3. 模型輸入 shape 雖然是 4 維，但通道位置不同\n` +
-          `4. MATLAB 匯出的 ONNX 前處理與這裡不一致`
+          `建議檢查：\n` +
+          `1. 模型輸入格式是否為 NCHW 或 NHWC\n` +
+          `2. 模型是否需要 normalization\n` +
+          `3. 類別順序是否與訓練時一致\n` +
+          `4. 模型輸出是否已經做過 softmax`
         );
       }
     }
