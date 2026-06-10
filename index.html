@@ -292,89 +292,252 @@
 </div>
 
 <script>
-    const CIFAR10_CLASSES = ['飛機 (Airplane)', '汽車 (Automobile)', '鳥 (Bird)', '貓 (Cat)', '鹿 (Deer)', '狗 (Dog)', '青蛙 (Frog)', '馬 (Horse)', '船 (Ship)', '卡車 (Truck)'];
-    const INPUT_SIZE = 224; 
+    const CIFAR10_CLASSES = [
+        '飛機 (Airplane)',
+        '汽車 (Automobile)',
+        '鳥 (Bird)',
+        '貓 (Cat)',
+        '鹿 (Deer)',
+        '狗 (Dog)',
+        '青蛙 (Frog)',
+        '馬 (Horse)',
+        '船 (Ship)',
+        '卡車 (Truck)'
+    ];
+
+    const INPUT_SIZE = 224;
 
     const imageUpload = document.getElementById('image-upload');
     const preview = document.getElementById('preview');
     const status = document.getElementById('status');
     const modelSelector = document.getElementById('model-selector');
 
-    let currentSession = null;
+    // ===== 新增 =====
+    let currentImageLoaded = false;
+    let loadedSessions = {};
 
-    // 更新狀態 UI 的輔助函數
+    // 更新狀態
     function updateStatus(message, stateClass) {
         status.className = `status-badge ${stateClass}`;
         status.innerHTML = message;
     }
 
+    // ===== 模型快取 =====
+    async function getSession(modelName) {
+
+        if (!loadedSessions[modelName]) {
+
+            updateStatus(
+                `📦 正在載入 ${modelName} ...`,
+                'status-loading'
+            );
+
+            loadedSessions[modelName] =
+                await ort.InferenceSession.create(
+                    modelName,
+                    {
+                        executionProviders: ['wasm']
+                    }
+                );
+        }
+
+        return loadedSessions[modelName];
+    }
+
+    // ===== 本機圖片 =====
     imageUpload.addEventListener('change', (e) => {
+
         const file = e.target.files[0];
+
         if (!file) return;
+
         const reader = new FileReader();
+
         reader.onload = (event) => {
+
+            preview.onload = () => {
+
+                currentImageLoaded = true;
+
+                runInference(preview);
+            };
+
             preview.src = event.target.result;
             preview.style.display = 'block';
-            runInference(preview);
         };
+
         reader.readAsDataURL(file);
     });
 
+    // ===== 範例圖片 =====
     function loadExample(imgElement) {
+
+        preview.onload = () => {
+
+            currentImageLoaded = true;
+
+            runInference(preview);
+        };
+
         preview.src = imgElement.src;
         preview.style.display = 'block';
-        runInference(preview);
     }
 
-    async function runInference(img) {
-        updateStatus('⏳ 模型載入與推論中...', 'status-loading');
-        
-        try {
-            const modelName = modelSelector.value;
-            const session = await ort.InferenceSession.create(modelName, { executionProviders: ['wasm'] });
+    // ===== 切換模型自動重新辨識 =====
+    modelSelector.addEventListener('change', async () => {
 
-            const canvas = document.createElement('canvas');
+        if (!currentImageLoaded) return;
+
+        await runInference(preview);
+    });
+
+    // ===== 推論 =====
+    async function runInference(img) {
+
+        updateStatus(
+            '⏳ 模型載入與推論中...',
+            'status-loading'
+        );
+
+        try {
+
+            const modelName = modelSelector.value;
+
+            const session =
+                await getSession(modelName);
+
+            const canvas =
+                document.createElement('canvas');
+
             canvas.width = INPUT_SIZE;
             canvas.height = INPUT_SIZE;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, INPUT_SIZE, INPUT_SIZE);
-            const imageData = ctx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE).data;
 
-            const float32Data = new Float32Array(3 * INPUT_SIZE * INPUT_SIZE);
-            
-            // 保留你已經修正過、不需要除以 255.0 的邏輯
-            for (let i = 0; i < INPUT_SIZE * INPUT_SIZE; i++) {
-                float32Data[i] = imageData[i * 4];                                  
-                float32Data[INPUT_SIZE * INPUT_SIZE + i] = imageData[i * 4 + 1];      
-                float32Data[2 * INPUT_SIZE * INPUT_SIZE + i] = imageData[i * 4 + 2];  
+            const ctx = canvas.getContext('2d');
+
+            ctx.drawImage(
+                img,
+                0,
+                0,
+                INPUT_SIZE,
+                INPUT_SIZE
+            );
+
+            const imageData =
+                ctx.getImageData(
+                    0,
+                    0,
+                    INPUT_SIZE,
+                    INPUT_SIZE
+                ).data;
+
+            const float32Data =
+                new Float32Array(
+                    3 * INPUT_SIZE * INPUT_SIZE
+                );
+
+            for (
+                let i = 0;
+                i < INPUT_SIZE * INPUT_SIZE;
+                i++
+            ) {
+
+                float32Data[i] =
+                    imageData[i * 4];
+
+                float32Data[
+                    INPUT_SIZE * INPUT_SIZE + i
+                ] =
+                    imageData[i * 4 + 1];
+
+                float32Data[
+                    2 * INPUT_SIZE * INPUT_SIZE + i
+                ] =
+                    imageData[i * 4 + 2];
             }
 
-            const inputTensor = new ort.Tensor('float32', float32Data, [1, 3, INPUT_SIZE, INPUT_SIZE]);
-            const inputName = session.inputNames[0];
-            const feeds = {};
-            feeds[inputName] = inputTensor;
+            const inputTensor =
+                new ort.Tensor(
+                    'float32',
+                    float32Data,
+                    [1, 3, INPUT_SIZE, INPUT_SIZE]
+                );
 
-            const results = await session.run(feeds);
-            const outputName = session.outputNames[0];
-            const outputData = results[outputName].data;
+            const inputName =
+                session.inputNames[0];
+
+            const feeds = {};
+
+            feeds[inputName] =
+                inputTensor;
+
+            const results =
+                await session.run(feeds);
+
+            const outputName =
+                session.outputNames[0];
+
+            const outputData =
+                results[outputName].data;
 
             let maxIndex = 0;
             let maxValue = outputData[0];
-            for (let i = 1; i < outputData.length; i++) {
-                if (outputData[i] > maxValue) {
-                    maxValue = outputData[i];
+
+            for (
+                let i = 1;
+                i < outputData.length;
+                i++
+            ) {
+
+                if (
+                    outputData[i] >
+                    maxValue
+                ) {
+
+                    maxValue =
+                        outputData[i];
+
                     maxIndex = i;
                 }
             }
 
-            const predictedClass = CIFAR10_CLASSES[maxIndex];
-            updateStatus(`🎯 預測結果：${predictedClass}`, 'status-success');
+            const predictedClass =
+                CIFAR10_CLASSES[maxIndex];
+
+            updateStatus(
+                `🎯 預測結果：${predictedClass}`,
+                'status-success'
+            );
 
         } catch (e) {
+
             console.error(e);
-            updateStatus(`❌ 發生錯誤：${e.message}`, 'status-error');
+
+            updateStatus(
+                `❌ 發生錯誤：${e.message}`,
+                'status-error'
+            );
         }
     }
+
+    // ===== 預先載入第一個模型（可選）=====
+    window.addEventListener('load', async () => {
+
+        try {
+
+            await getSession(
+                modelSelector.value
+            );
+
+            updateStatus(
+                '✅ 模型已就緒，請選擇圖片',
+                'status-default'
+            );
+
+        } catch (e) {
+
+            console.error(e);
+        }
+    });
 </script>
 </body>
 </html>
