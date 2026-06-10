@@ -112,9 +112,9 @@
             const float32Data = new Float32Array(3 * INPUT_SIZE * INPUT_SIZE);
             for (let i = 0; i < INPUT_SIZE * INPUT_SIZE; i++) {
                 // 這裡執行最基礎的正規化 (除以 255)。若你 MATLAB 模型有特殊正規化 (如 ImageNet mean/std)，需在此處修改。
-                float32Data[i] = imageData[i * 4] / 255.0;                                    // R
-                float32Data[INPUT_SIZE * INPUT_SIZE + i] = imageData[i * 4 + 1] / 255.0;      // G
-                float32Data[2 * INPUT_SIZE * INPUT_SIZE + i] = imageData[i * 4 + 2] / 255.0;  // B
+                float32Data[i] = imageData[i * 4] ;                                    // R
+                float32Data[INPUT_SIZE * INPUT_SIZE + i] = imageData[i * 4 + 1] ;      // G
+                float32Data[2 * INPUT_SIZE * INPUT_SIZE + i] = imageData[i * 4 + 2];  // B
             }
 
             // 3. 建立 Tensor 準備輸入模型
