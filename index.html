@@ -20,9 +20,7 @@
       --radius: 18px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -47,16 +45,8 @@
       box-shadow: var(--shadow);
     }
 
-    .hero h1 {
-      margin: 0 0 10px;
-      font-size: 2rem;
-    }
-
-    .hero p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-    }
+    .hero h1 { margin: 0 0 10px; font-size: 2rem; }
+    .hero p { margin: 0; color: var(--muted); line-height: 1.7; }
 
     .grid {
       display: grid;
@@ -65,9 +55,7 @@
     }
 
     @media (max-width: 960px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
+      .grid { grid-template-columns: 1fr; }
     }
 
     .panel {
@@ -86,9 +74,7 @@
       font-size: 1.05rem;
     }
 
-    .panel-body {
-      padding: 20px;
-    }
+    .panel-body { padding: 20px; }
 
     .model-switcher {
       display: grid;
@@ -159,9 +145,7 @@
       text-align: center;
     }
 
-    .upload-box input[type="file"] {
-      display: none;
-    }
+    .upload-box input[type="file"] { display: none; }
 
     .btn {
       display: inline-block;
@@ -233,9 +217,7 @@
     }
 
     @media (max-width: 960px) {
-      .main-view {
-        grid-template-columns: 1fr;
-      }
+      .main-view { grid-template-columns: 1fr; }
     }
 
     .preview-card {
@@ -272,7 +254,8 @@
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--border);
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.7;
+      white-space: pre-line;
     }
 
     .prediction {
@@ -317,7 +300,6 @@
       border-radius: 999px;
       background: rgba(255,255,255,0.08);
       overflow: hidden;
-      position: relative;
     }
 
     .bar-fill {
@@ -334,10 +316,7 @@
       line-height: 1.7;
     }
 
-    .hidden-canvas {
-      display: none;
-    }
-
+    .hidden-canvas { display: none; }
     .small-note {
       font-size: 0.86rem;
       color: #94a3b8;
@@ -345,8 +324,11 @@
       margin-top: 8px;
     }
 
-    .warn {
-      color: #fca5a5;
+    .warn { color: #fca5a5; }
+    code {
+      background: rgba(255,255,255,0.07);
+      padding: 2px 6px;
+      border-radius: 6px;
     }
   </style>
 </head>
@@ -355,8 +337,8 @@
     <section class="hero">
       <h1>CIFAR-10 模型展示平台</h1>
       <p>
-        這是一個可直接部署到 GitHub Pages 的前端模型測試網站。使用者可以切換不同模型、
-        上傳圖片或點選範例圖片，讓瀏覽器直接載入 ONNX 模型並執行推論。
+        支援切換 GoogleNet 與 ResNet18 模型，可上傳任意尺寸圖片或使用範例圖片進行測試。
+        網頁會依照 ONNX 模型的輸入 shape，自動調整圖片尺寸與 tensor 排列格式。
       </p>
     </section>
 
@@ -390,11 +372,11 @@
 
           <div class="controls">
             <div class="upload-box">
-              <p>請上傳一張圖片進行測試</p>
+              <p>請上傳任意尺寸圖片進行測試</p>
               <label for="fileInput" class="btn">選擇圖片</label>
               <input type="file" id="fileInput" accept="image/*" />
               <div class="small-note">
-                支援一般圖片格式（JPG / PNG / WEBP）。系統會自動縮放為 32×32 後送入模型。
+                不限制原始圖片尺寸，系統會依模型需求自動縮放。
               </div>
             </div>
 
@@ -405,7 +387,7 @@
           <div style="margin-top: 24px;">
             <h3 style="margin: 0 0 10px;">範例圖片</h3>
             <div class="small-note">
-              你可以把範例圖放在 <code>samples/</code> 資料夾中，點擊後就會直接載入並判斷。
+              請將範例圖片放在 <code>samples/</code> 資料夾中。
             </div>
             <div class="sample-grid" id="sampleGrid"></div>
           </div>
@@ -421,6 +403,7 @@
               <div class="meta">
                 <div><strong>目前模型：</strong><span id="currentModelName">GoogleNet CIFAR-10</span></div>
                 <div><strong>模型狀態：</strong><span id="modelStatus">尚未載入</span></div>
+                <div><strong>模型輸入：</strong><span id="modelInputInfo">尚未取得</span></div>
                 <div><strong>圖片來源：</strong><span id="imageSource">尚未選擇</span></div>
               </div>
             </div>
@@ -442,10 +425,8 @@
               </div>
 
               <div class="footer-note">
-                <strong>注意：</strong>
-                由於這是 CIFAR-10 模型，若上傳的是高解析度、非 CIFAR-10 分布的圖片，
-                推論結果可能不如預期。若你的模型有特定正規化方式（例如 mean/std），
-                請依實際訓練設定調整前處理程式碼。
+                若模型是由 MATLAB 匯出，常見問題是輸入格式可能不是 <code>[1,3,32,32]</code>，
+                而是 <code>[1,32,32,3]</code>。此版本已嘗試自動判斷。
               </div>
             </div>
           </div>
@@ -454,10 +435,9 @@
     </div>
   </div>
 
-  <canvas id="hiddenCanvas" class="hidden-canvas" width="32" height="32"></canvas>
+  <canvas id="hiddenCanvas" class="hidden-canvas"></canvas>
 
   <script>
-    // ====== 基本設定 ======
     const CLASS_NAMES = [
       "airplane", "automobile", "bird", "cat", "deer",
       "dog", "frog", "horse", "ship", "truck"
@@ -478,13 +458,11 @@
       }
     };
 
-    // 範例圖片設定：
-    // 請自行在 GitHub 專案中建立 samples 資料夾，並放入對應圖片
     const SAMPLE_IMAGES = [
       { label: "飛機範例", file: "./samples/airplane.jpg" },
       { label: "汽車範例", file: "./samples/automobile.jpg" },
       { label: "貓咪範例", file: "./samples/cat.jpg" },
-      { label: "狗狗範例", file: "./samples/dog.jpg" }
+      { label: "卡車範例", file: "./samples/truck.jpg" }
     ];
 
     let currentModelKey = "googlenet";
@@ -492,16 +470,17 @@
     let currentImageElement = null;
     let currentImageSourceText = "尚未選擇";
     let isModelLoading = false;
+    let currentModelMeta = null;
 
-    // 若你的模型輸入正規化為 mean/std，可改為 true 並調整下方參數
+    // 如果你的 MATLAB 模型訓練有 normalization，再改成 true
     const USE_NORMALIZATION = false;
     const MEAN = [0.4914, 0.4822, 0.4465];
     const STD = [0.2023, 0.1994, 0.2010];
 
-    // ====== DOM ======
     const modelCards = document.querySelectorAll(".model-card");
     const currentModelName = document.getElementById("currentModelName");
     const modelStatus = document.getElementById("modelStatus");
+    const modelInputInfo = document.getElementById("modelInputInfo");
     const imageSource = document.getElementById("imageSource");
     const fileInput = document.getElementById("fileInput");
     const previewImage = document.getElementById("previewImage");
@@ -516,7 +495,6 @@
     const hiddenCanvas = document.getElementById("hiddenCanvas");
     const ctx = hiddenCanvas.getContext("2d");
 
-    // ====== 初始化 ======
     init();
 
     async function init() {
@@ -531,7 +509,6 @@
         card.addEventListener("click", async () => {
           const selected = card.dataset.model;
           if (selected === currentModelKey) return;
-
           currentModelKey = selected;
           updateModelUI();
           await loadModel(currentModelKey);
@@ -563,7 +540,7 @@
           <img src="${sample.file}" alt="${sample.label}" />
           <div>${sample.label}</div>
         `;
-        div.addEventListener("click", async () => {
+        div.addEventListener("click", () => {
           loadPreview(sample.file, `範例圖片：${sample.label}`);
           setStatus(`已載入範例圖片：${sample.label}，可直接按「開始判斷」。`);
         });
@@ -578,10 +555,56 @@
       currentModelName.textContent = MODEL_CONFIG[currentModelKey].name;
     }
 
+    function inferModelInputShape(session) {
+      const inputName = session.inputNames[0];
+      const inputMeta = session.inputMetadata[inputName];
+
+      const dims = inputMeta?.dimensions || [];
+      const type = inputMeta?.type || "unknown";
+
+      return {
+        inputName,
+        dims,
+        type
+      };
+    }
+
+    function parseInputSpec(dims) {
+      // 預設 CIFAR-10 常見尺寸
+      let height = 32;
+      let width = 32;
+      let format = "NCHW";
+
+      if (!Array.isArray(dims) || dims.length !== 4) {
+        return { format, height, width, rawDims: dims, valid: false };
+      }
+
+      const d = dims.map(v => (typeof v === "number" ? v : String(v).toLowerCase()));
+
+      // 可能是 [1,3,H,W]
+      if (d[1] === 3 || d[1] === "3") {
+        format = "NCHW";
+        height = typeof dims[2] === "number" ? dims[2] : 32;
+        width = typeof dims[3] === "number" ? dims[3] : 32;
+        return { format, height, width, rawDims: dims, valid: true };
+      }
+
+      // 可能是 [1,H,W,3]
+      if (d[3] === 3 || d[3] === "3") {
+        format = "NHWC";
+        height = typeof dims[1] === "number" ? dims[1] : 32;
+        width = typeof dims[2] === "number" ? dims[2] : 32;
+        return { format, height, width, rawDims: dims, valid: true };
+      }
+
+      return { format, height, width, rawDims: dims, valid: false };
+    }
+
     async function loadModel(modelKey) {
       const model = MODEL_CONFIG[modelKey];
       isModelLoading = true;
       modelStatus.textContent = "載入中...";
+      modelInputInfo.textContent = "讀取中...";
       setStatus(`正在載入模型：${model.name}`);
 
       try {
@@ -590,11 +613,24 @@
           graphOptimizationLevel: "all"
         });
 
+        const meta = inferModelInputShape(currentSession);
+        const spec = parseInputSpec(meta.dims);
+        currentModelMeta = { ...meta, ...spec };
+
         modelStatus.textContent = `已載入：${model.name}`;
-        setStatus(`模型載入完成：${model.name}（${model.note}）`);
+        modelInputInfo.textContent = `${meta.inputName} | ${meta.type} | [${meta.dims.join(", ")}] | ${spec.format} | ${spec.height}×${spec.width}`;
+
+        setStatus(
+          `模型載入完成：${model.name}（${model.note}）\n` +
+          `輸入名稱：${meta.inputName}\n` +
+          `輸入型別：${meta.type}\n` +
+          `輸入維度：[${meta.dims.join(", ")}]\n` +
+          `判定格式：${spec.format}，縮放尺寸：${spec.width}×${spec.height}`
+        );
       } catch (error) {
         console.error(error);
         modelStatus.innerHTML = `<span class="warn">模型載入失敗</span>`;
+        modelInputInfo.textContent = "無法取得";
         setStatus(`模型載入失敗，請確認檔案 ${model.file} 是否存在，且 GitHub Pages 路徑設定正確。`);
       } finally {
         isModelLoading = false;
@@ -611,6 +647,14 @@
       img.crossOrigin = "anonymous";
       img.onload = () => {
         currentImageElement = img;
+        setStatus(
+          `圖片已載入。\n` +
+          `原始尺寸：${img.naturalWidth} × ${img.naturalHeight}\n` +
+          `來源：${sourceText}`
+        );
+      };
+      img.onerror = () => {
+        setStatus("圖片載入失敗，請重新選擇圖片。");
       };
       img.src = src;
     }
@@ -662,48 +706,74 @@
       });
     }
 
-function preprocessImage(image) {
-      const size = 224; // 配合你的 ResNet-18 模型需求
+    function preprocessImage(image, modelMeta) {
+      const width = modelMeta?.width || 32;
+      const height = modelMeta?.height || 32;
+      const format = modelMeta?.format || "NCHW";
 
-      // 1. 計算「置中裁切」的範圍，確保圖片不會變形
-      // 找出圖片較短的邊作為正方形的邊長
-      const minDim = Math.min(image.width, image.height);
-      // 計算裁切的起始 X 與 Y 座標，讓正方形落在圖片正中央
-      const startX = (image.width - minDim) / 2;
-      const startY = (image.height - minDim) / 2;
+      hiddenCanvas.width = width;
+      hiddenCanvas.height = height;
 
-      // 2. 設定隱藏 Canvas 的實際尺寸
-      hiddenCanvas.width = size;
-      hiddenCanvas.height = size;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(image, 0, 0, width, height);
 
-      // 3. 透過 Canvas API 同時完成「裁切」與「縮放」
-      // drawImage 參數：(圖片來源, 來源X, 來源Y, 來源寬, 來源高, 目標X, 目標Y, 目標寬, 目標高)
-      ctx.clearRect(0, 0, size, size);
-      ctx.drawImage(image, startX, startY, minDim, minDim, 0, 0, size, size);
+      const imageData = ctx.getImageData(0, 0, width, height).data;
 
-      // 4. 取得處理後的像素資料
-      const imageData = ctx.getImageData(0, 0, size, size).data;
+      if (format === "NCHW") {
+        const input = new Float32Array(1 * 3 * height * width);
 
-      // 5. 轉換為 ONNX 模型需要的 Tensor (NCHW 格式)
-      const input = new Float32Array(1 * 3 * size * size);
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
 
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          const idx = (y * size + x) * 4;
-          
-          // 擷取 RGB 通道數值
-          let r = imageData[idx];
-          let g = imageData[idx + 1];
-          let b = imageData[idx + 2];
+            let r = imageData[idx] / 255.0;
+            let g = imageData[idx + 1] / 255.0;
+            let b = imageData[idx + 2] / 255.0;
 
-          const offset = y * size + x;
-          input[offset] = r;                         // R 通道
-          input[size * size + offset] = g;           // G 通道
-          input[2 * size * size + offset] = b;       // B 通道
+            if (USE_NORMALIZATION) {
+              r = (r - MEAN[0]) / STD[0];
+              g = (g - MEAN[1]) / STD[1];
+              b = (b - MEAN[2]) / STD[2];
+            }
+
+            const offset = y * width + x;
+            input[offset] = r;
+            input[width * height + offset] = g;
+            input[2 * width * height + offset] = b;
+          }
         }
+
+        return new ort.Tensor("float32", input, [1, 3, height, width]);
       }
 
-      return new ort.Tensor("float32", input, [1, 3, size, size]);
+      if (format === "NHWC") {
+        const input = new Float32Array(1 * height * width * 3);
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+
+            let r = imageData[idx] / 255.0;
+            let g = imageData[idx + 1] / 255.0;
+            let b = imageData[idx + 2] / 255.0;
+
+            if (USE_NORMALIZATION) {
+              r = (r - MEAN[0]) / STD[0];
+              g = (g - MEAN[1]) / STD[1];
+              b = (b - MEAN[2]) / STD[2];
+            }
+
+            const offset = (y * width + x) * 3;
+            input[offset] = r;
+            input[offset + 1] = g;
+            input[offset + 2] = b;
+          }
+        }
+
+        return new ort.Tensor("float32", input, [1, height, width, 3]);
+      }
+
+      throw new Error("無法判斷模型輸入格式，只支援 NCHW 或 NHWC。");
     }
 
     async function runPrediction() {
@@ -723,22 +793,30 @@ function preprocessImage(image) {
       }
 
       try {
-        setStatus("正在進行模型推論...");
-
-        const inputTensor = preprocessImage(currentImageElement);
-
-        // 自動取得模型輸入名稱
-        const inputName = currentSession.inputNames[0];
+        const inputTensor = preprocessImage(currentImageElement, currentModelMeta);
+        const inputName = currentModelMeta.inputName;
         const feeds = {};
         feeds[inputName] = inputTensor;
 
+        setStatus(
+          `正在進行模型推論...\n` +
+          `圖片原始尺寸：${currentImageElement.naturalWidth} × ${currentImageElement.naturalHeight}\n` +
+          `模型輸入格式：${currentModelMeta.format}\n` +
+          `模型輸入 tensor shape：${JSON.stringify(inputTensor.dims)}`
+        );
+
         const results = await currentSession.run(feeds);
-
-        // 自動取得模型輸出
         const outputName = currentSession.outputNames[0];
-        const output = results[outputName].data;
+        const outputTensor = results[outputName];
 
-        const probs = softmax(Array.from(output));
+        if (!outputTensor || !outputTensor.data) {
+          throw new Error("模型輸出為空，請檢查 ONNX 輸出節點。");
+        }
+
+        const output = Array.from(outputTensor.data);
+
+        // 若模型輸出是 10 維 logits，這裡可直接 softmax
+        const probs = softmax(output);
         const topK = getTopK(probs, 5);
         const best = topK[0];
 
@@ -747,10 +825,24 @@ function preprocessImage(image) {
         predictedScore.textContent = `信心分數： ${(best.prob * 100).toFixed(2)}%`;
         renderTopK(topK);
 
-        setStatus(`推論完成。使用模型：${MODEL_CONFIG[currentModelKey].name}，圖片來源：${currentImageSourceText}`);
+        setStatus(
+          `推論完成。\n` +
+          `使用模型：${MODEL_CONFIG[currentModelKey].name}\n` +
+          `圖片來源：${currentImageSourceText}\n` +
+          `輸出節點：${outputName}\n` +
+          `輸出 shape：${JSON.stringify(outputTensor.dims)}`
+        );
       } catch (error) {
         console.error(error);
-        setStatus("推論失敗。請確認模型輸入維度是否為 [1, 3, 32, 32]，以及輸出是否為 10 類別 logits。");
+        setStatus(
+          `推論失敗。\n` +
+          `錯誤訊息：${error.message}\n\n` +
+          `可能原因：\n` +
+          `1. 模型輸入格式不是目前判定的 NCHW / NHWC\n` +
+          `2. 模型需要特殊 normalization\n` +
+          `3. 模型輸入 shape 雖然是 4 維，但通道位置不同\n` +
+          `4. MATLAB 匯出的 ONNX 前處理與這裡不一致`
+        );
       }
     }
   </script>
