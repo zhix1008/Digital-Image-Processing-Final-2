@@ -941,8 +941,8 @@
           throw new Error("模型輸出為空，請檢查 ONNX 輸出節點。");
         }
 
-        const rawOutput = flattenOutput(outputTensor.data);
 
+	const probs = rawOutput;
         if (rawOutput.length < CLASS_NAMES.length) {
           throw new Error(
             `模型輸出長度不足，取得 ${rawOutput.length}，預期至少 ${CLASS_NAMES.length}。`
