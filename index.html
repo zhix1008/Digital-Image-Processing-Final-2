@@ -6,11 +6,11 @@
     <title>CIFAR-10 影像辨識模型測試</title>
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <style>
-        /* 基礎色彩與字體設定 - 升級為更具科技感的配色 */
+        /* 基礎色彩與字體設定 - 已全面替換為藍色系 */
         :root {
-            --primary-color: #6366f1;
-            --primary-hover: #4f46e5;
-            --secondary-color: #ec4899;
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #38bdf8;
             --success-color: #059669;
             --error-color: #dc2626;
             --text-main: #1f2937;
@@ -27,8 +27,8 @@
 
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
-            /* 動態漸層背景 */
-            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            /* 藍色系動態漸層背景 */
+            background: linear-gradient(135deg, #1e3a8a 0%, #93c5fd 100%);
             background-size: 200% 200%;
             animation: gradientBG 15s ease infinite;
             color: var(--text-main); 
@@ -117,7 +117,7 @@
         select:focus { 
             outline: none; 
             border-color: var(--primary-color); 
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
 
         /* 客製化上傳按鈕 */
@@ -143,7 +143,7 @@
         .btn-upload:hover {
             border-color: var(--primary-color);
             color: var(--primary-color);
-            background-color: rgba(99, 102, 241, 0.05);
+            background-color: rgba(37, 99, 235, 0.05);
             transform: scale(1.01);
         }
         .upload-btn-wrapper input[type=file] {
@@ -180,7 +180,7 @@
         .examples img:hover { 
             border-color: var(--primary-color); 
             transform: translateY(-6px) scale(1.08); 
-            box-shadow: 0 12px 20px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 12px 20px rgba(37, 99, 235, 0.3);
         }
 
         /* 結果顯示區 */
