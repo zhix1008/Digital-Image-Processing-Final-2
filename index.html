@@ -18,6 +18,16 @@
             --border-color: rgba(229, 231, 235, 0.5);
             --card-bg: rgba(255, 255, 255, 0.85);
         }
+	.class-list {
+   	 	text-align: center;
+   	 	margin-bottom: 25px;
+   	 	padding: 12px 18px;
+   	 	background: rgba(255,255,255,0.6);
+   		 border-radius: 12px;
+    		color: var(--text-main);
+   	 	font-size: 0.95rem;
+    		line-height: 1.8;
+			}
 
         * {
             box-sizing: border-box;
@@ -258,7 +268,10 @@
 
 <div class="container">
     <h1>✨ CIFAIR-10 影像辨識測試</h1>
-    
+    <div class="class-list">
+        <strong>支援辨識類別：</strong><br>
+        飛機 (Airplane)、汽車 (Automobile)、鳥 (Bird)、貓 (Cat)、鹿 (Deer)、狗 (Dog)、青蛙 (Frog)、馬 (Horse)、船 (Ship)、卡車 (Truck)
+    </div>
     <div class="control-group">
         <label for="model-selector">1. 選擇模型</label>
         <select id="model-selector">
